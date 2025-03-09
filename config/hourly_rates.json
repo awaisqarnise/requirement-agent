@@ -1,0 +1,14 @@
+{
+    "React Native": 35,
+    "Vue.js": 35,
+    "Angular": 35,
+    "Node.js": 35,
+    "Django": 40,
+    "Flask": 40,
+    "FastAPI": 55,
+    "PostgreSQL": 40,
+    "MySQL": 35,
+    "MongoDB": 45,
+    "AWS": 60,
+    "Azure": 60
+}
