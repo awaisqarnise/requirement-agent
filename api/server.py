@@ -11,6 +11,10 @@ app = FastAPI()
 class ProjectRequest(BaseModel):
     project_description: str
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Requirement Analysis API!"}
+
 @app.post("/analyze")
 def analyze_project(request: ProjectRequest):
     # Use LLM to validate input
