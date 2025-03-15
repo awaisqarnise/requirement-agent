@@ -5,7 +5,14 @@ from services.validation import validate_project_description
 from fastapi import HTTPException
 
 # Initialize FastAPI app
-app = FastAPI()
+app = FastAPI(
+    title="Requirement Agent API",
+    description="API for software project requirement analysis.",
+    version="1.0",
+    docs_url="/docs",  # Swagger UI
+    redoc_url="/redoc"  # Alternative Redoc UI
+)
+
 
 # Define request model
 class ProjectRequest(BaseModel):
@@ -28,4 +35,9 @@ def analyze_project(request: ProjectRequest):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
     return result
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
