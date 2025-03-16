@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . /app
 
 # Copy .env file into the container
-COPY .env /app/.env
+#COPY .env /app/.env
 
 
 # Install dependencies
