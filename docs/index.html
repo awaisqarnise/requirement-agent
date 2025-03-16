@@ -4,125 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Requirement Analysis Agent</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        /* Tkxel Branding Colors */
-        :root {
-            --primary-color: #FF5733;
-            --secondary-color: #333333;
-            --accent-color: #FFFFFF;
-            --bg-color: #F4F4F4;
-        }
-
+        /* Tkxel Theme */
         body {
             font-family: Arial, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
             text-align: center;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 50px auto;
-            background: var(--accent-color);
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            background: var(--secondary-color);
-            color: var(--accent-color);
-        }
-
-        .header img {
-            height: 50px;
-            margin-right: 10px;
         }
 
         h1 {
-            font-size: 22px;
+            color: #004080; /* Tkxel primary color */
         }
 
-        label {
-            font-size: 16px;
-            font-weight: bold;
+        #container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
         }
 
-        input {
+        /* Beautified Textarea */
+        textarea {
             width: 100%;
+            height: 120px;
             padding: 10px;
-            margin: 10px 0;
-            border: 1px solid var(--secondary-color);
+            font-size: 16px;
+            border: 1px solid #ccc;
             border-radius: 5px;
+            resize: vertical;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #004080;
+            box-shadow: 0px 0px 5px rgba(0, 64, 128, 0.5);
         }
 
         button {
-            width: 100%;
-            padding: 10px;
-            background: var(--primary-color);
-            color: var(--accent-color);
+            background-color: #004080;
+            color: white;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            font-size: 16px;
             cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
         }
 
         button:hover {
-            background: darkred;
+            background-color: #003366;
         }
 
-        .response {
-            text-align: left;
+        /* Loader */
+        #loader {
+            display: none;
+            margin-top: 10px;
+            font-size: 16px;
+            color: #004080;
+        }
+
+        /* Output Styling */
+        #output {
             margin-top: 20px;
-            background: var(--bg-color);
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        .response ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .response li {
-            padding: 8px;
-            border-bottom: 1px solid #ccc;
+            text-align: left;
         }
     </style>
 </head>
 <body>
-
-    <!-- Header with Logo -->
-    <div class="header">
-        <img src="tkxel1.png" alt="Tkxel Logo">
-        <h1>Requirement Analysis Agent</h1>
-    </div>
-
-    <div class="container">
-        <label for="projectDesc">Enter Project Description:</label>
-        <textarea id="projectDescription" placeholder="Enter project description..." rows="4" required></textarea>
+    <h1>Requirement Analysis Agent</h1>
+    <div id="container">
+        <textarea id="projectDescription" placeholder="Enter project description..." rows="4"></textarea>
         <button onclick="analyzeProject()">Analyze</button>
-
-        <!-- Response Display -->
-        <div class="response" id="responseContainer" style="display: none;">
-            <h3>Analysis Result:</h3>
-            <ul id="resultList"></ul>
-        </div>
+        <div id="loader"><i class="fas fa-spinner fa-spin"></i> Processing...</div>
+        <div id="output"></div>
     </div>
 
     <script>
         async function analyzeProject() {
-            let projectDescription = document.getElementById("projectDescription").value;
-            let resultContainer = document.getElementById("results");
-            let loader = document.getElementById("loader");
+            const projectDescription = document.getElementById("projectDescription").value;
+            const outputElement = document.getElementById("output");
+            const loaderElement = document.getElementById("loader");
 
-            resultContainer.innerHTML = "";
-            loader.style.display = "block"; // Show loader while fetching data
+            // Clear previous results
+            if (outputElement) outputElement.innerHTML = "";
+
+            // Validate input
+            if (!projectDescription.trim()) {
+                alert("Please enter a project description.");
+                return;
+            }
+
+            // Show loader
+            if (loaderElement) loaderElement.style.display = "block";
 
             try {
                 const response = await fetch("https://requirement-agent-production.up.railway.app/analyze", {
@@ -131,118 +109,56 @@
                     body: JSON.stringify({ project_description: projectDescription }),
                 });
 
-                const data = await response.json();
-                loader.style.display = "none"; // Hide loader when data arrives
+                if (!response.ok) throw new Error("Network response was not ok");
 
-                // Display results properly
-                resultContainer.innerHTML = formatResults(data);
+                const result = await response.json();
+
+                // Hide loader
+                if (loaderElement) loaderElement.style.display = "none";
+
+                // Display results
+                if (outputElement) {
+                    outputElement.innerHTML = formatResponse(result);
+                }
+
             } catch (error) {
-                loader.style.display = "none"; // Hide loader on error
-                resultContainer.innerHTML = `<p style="color:red;">Error fetching results. Please try again.</p>`;
+                console.error("Error:", error);
+                if (loaderElement) loaderElement.style.display = "none";
+                if (outputElement) outputElement.innerHTML = `<p style="color: red;">Failed to fetch results.</p>`;
             }
         }
 
-        function formatResults(data) {
-            let html = "";
-
-            for (const [key, value] of Object.entries(data)) {
-                let formattedKey = key.replace(/_/g, " ").toUpperCase();
-
-                if (Array.isArray(value)) {
-                    html += `<h3>${formattedKey}</h3><ul>`;
-                    value.forEach(item => {
-                        if (typeof item === "object") {
-                            html += "<li>";
-                            for (const [subKey, subValue] of Object.entries(item)) {
-                                html += `<strong>${subKey.replace(/_/g, " ")}:</strong> ${subValue}<br>`;
-                            }
-                            html += "</li>";
-                        } else {
-                            html += `<li>${item}</li>`;
-                        }
+        function formatResponse(data) {
+            let formatted = "<h2>Analysis Result:</h2>";
+            for (const key in data) {
+                if (Array.isArray(data[key])) {
+                    formatted += `<strong>${formatKey(key)}:</strong><ul>`;
+                    data[key].forEach(item => {
+                        formatted += `<li>${typeof item === "object" ? formatObject(item) : item}</li>`;
                     });
-                    html += "</ul>";
-                } 
-                else if (typeof value === "object") {
-                    if (key === "cost_estimation") {
-                        html += `<h3>${formattedKey}</h3>`;
-                        html += `<table border="1" cellspacing="0" cellpadding="5">
-                                    <tr><th>Category</th><th>Estimated Hours</th><th>Hourly Rate</th><th>Subtotal</th></tr>`;
-                        for (const [subKey, subValue] of Object.entries(value)) {
-                            if (typeof subValue === "object") {
-                                html += `<tr>
-                                            <td>${subKey.replace(/_/g, " ")}</td>
-                                            <td>${subValue.estimated_hours || "N/A"}</td>
-                                            <td>${subValue.hourly_rate || "N/A"}</td>
-                                            <td>${subValue.subtotal || "N/A"}</td>
-                                        </tr>`;
-                            } else {
-                                html += `<tr><td colspan="4"><strong>${subKey}:</strong> ${subValue}</td></tr>`;
-                            }
-                        }
-                        html += `</table>`;
-                    } 
-                    else if (key === "suggested_tech_stack") {
-                        html += `<h3>${formattedKey}</h3>`;
-                        html += `<table border="1" cellspacing="0" cellpadding="5">
-                                    <tr><th>Technology</th><th>Version</th><th>Reason</th><th>Hourly Rate</th></tr>`;
-                        value.forEach(tech => {
-                            html += `<tr>
-                                        <td>${tech.technology}</td>
-                                        <td>${tech.version}</td>
-                                        <td>${tech.reason}</td>
-                                        <td>${tech.hourly_rate || "N/A"}</td>
-                                    </tr>`;
-                        });
-                        html += `</table>`;
-                    } 
-                    else if (key === "milestone_plan") {
-                        html += `<h3>${formattedKey}</h3>`;
-                        html += `<table border="1" cellspacing="0" cellpadding="5">
-                                    <tr><th>Milestone</th><th>Expected Date</th></tr>`;
-                        value.forEach(milestone => {
-                            html += `<tr>
-                                        <td>${milestone.milestone}</td>
-                                        <td>${milestone.expected_date}</td>
-                                    </tr>`;
-                        });
-                        html += `</table>`;
-                    } 
-                    else if (key === "risk_assessment") {
-                        html += `<h3>${formattedKey}</h3>`;
-                        html += `<table border="1" cellspacing="0" cellpadding="5">
-                                    <tr><th>Risk</th><th>Mitigation Strategy</th></tr>`;
-                        value.forEach(risk => {
-                            html += `<tr>
-                                        <td>${risk.risk}</td>
-                                        <td>${risk.mitigation_strategy}</td>
-                                    </tr>`;
-                        });
-                        html += `</table>`;
-                    } 
-                    else {
-                        html += `<h3>${formattedKey}</h3><ul>`;
-                        for (const [subKey, subValue] of Object.entries(value)) {
-                            html += `<li><strong>${subKey.replace(/_/g, " ")}:</strong> ${subValue}</li>`;
-                        }
-                        html += "</ul>";
-                    }
-                } 
-                else {
-                    html += `<h3>${formattedKey}</h3><p>${value}</p>`;
+                    formatted += "</ul>";
+                } else if (typeof data[key] === "object") {
+                    formatted += `<strong>${formatKey(key)}:</strong>${formatObject(data[key])}<br>`;
+                } else {
+                    formatted += `<strong>${formatKey(key)}:</strong> ${data[key]}<br>`;
                 }
             }
-
-            return html;
+            return formatted;
         }
 
+        function formatKey(key) {
+            return key.replace(/_/g, " ").toUpperCase();
+        }
 
-
-
+        function formatObject(obj) {
+            return `<table border="1" style="border-collapse: collapse; width: 100%; margin-top: 5px;">
+                ${Object.entries(obj).map(([k, v]) => `
+                    <tr>
+                        <td style="padding: 5px;"><strong>${formatKey(k)}</strong></td>
+                        <td style="padding: 5px;">${v}</td>
+                    </tr>`).join("")}
+            </table>`;
+        }
     </script>
-    <p id="loader" style="display: none; font-weight: bold; text-align: center; color: #ff6600;">
-        🔄 Fetching results... Please wait.
-    </p>
-    
 </body>
 </html>
