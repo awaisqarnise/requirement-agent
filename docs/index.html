@@ -118,16 +118,19 @@
     <script>
         async function analyzeProject() {
             const projectDescription = document.getElementById("projectDesc").value;
+            const responseContainer = document.getElementById("responseContainer");
+            const resultList = document.getElementById("resultList");
+            const loader = document.getElementById("loader"); // Loader Element
+
             if (!projectDescription) {
                 alert("Please enter a project description!");
                 return;
             }
 
-            const responseContainer = document.getElementById("responseContainer");
-            const resultList = document.getElementById("resultList");
-
+            // Show the loader and clear previous results
+            loader.style.display = "block";
             responseContainer.style.display = "none";
-            resultList.innerHTML = "Loading...";
+            resultList.innerHTML = "";
 
             try {
                 const response = await fetch("https://requirement-agent-production.up.railway.app/analyze", {
@@ -145,19 +148,42 @@
                 const data = await response.json();
                 resultList.innerHTML = "";
 
-                // Convert JSON response into line items
+                // Function to process nested objects and arrays
+                function parseValue(key, value) {
+                    if (Array.isArray(value)) {
+                        return `<strong>${key}:</strong><ul>${value.map(item => 
+                            typeof item === "object" ? `<li>${JSON.stringify(item, null, 2)}</li>` : `<li>${item}</li>`
+                        ).join('')}</ul>`;
+                    } else if (typeof value === "object" && value !== null) {
+                        return `<strong>${key}:</strong><ul>${Object.entries(value).map(([subKey, subValue]) =>
+                            `<li><strong>${subKey}:</strong> ${JSON.stringify(subValue, null, 2)}</li>`
+                        ).join('')}</ul>`;
+                    } else {
+                        return `<strong>${key}:</strong> ${value}`;
+                    }
+                }
+
+                // Convert JSON response into a readable format
                 for (const [key, value] of Object.entries(data)) {
                     const listItem = document.createElement("li");
-                    listItem.innerHTML = `<strong>${key}:</strong> ${value}`;
+                    listItem.innerHTML = parseValue(key, value);
                     resultList.appendChild(listItem);
                 }
 
+                // Hide the loader and show results
+                loader.style.display = "none";
                 responseContainer.style.display = "block";
             } catch (error) {
                 resultList.innerHTML = `<li style="color: red;">Error: ${error.message}</li>`;
+                loader.style.display = "none";
             }
         }
-    </script>
 
+
+    </script>
+    <p id="loader" style="display: none; font-weight: bold; text-align: center; color: #ff6600;">
+        🔄 Fetching results... Please wait.
+    </p>
+    
 </body>
 </html>
