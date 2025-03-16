@@ -99,7 +99,7 @@
 
     <!-- Header with Logo -->
     <div class="header">
-        <img src="https://tkxel.com/assets/tkxel-logo.svg" alt="Tkxel Logo">
+        <img src="tkxel.png" alt="Tkxel Logo">
         <h1>Requirement Analysis Agent</h1>
     </div>
 
@@ -151,13 +151,26 @@
                 // Function to process nested objects and arrays
                 function parseValue(key, value) {
                     if (Array.isArray(value)) {
-                        return `<strong>${key}:</strong><ul>${value.map(item => 
-                            typeof item === "object" ? `<li>${JSON.stringify(item, null, 2)}</li>` : `<li>${item}</li>`
-                        ).join('')}</ul>`;
+                        // Special handling for arrays of objects (tables)
+                        if (typeof value[0] === "object") {
+                            let tableHTML = `<strong>${key}:</strong><table border="1" style="width:100%; border-collapse: collapse;">`;
+                            tableHTML += "<tr>" + Object.keys(value[0]).map(k => `<th style="padding:5px;">${k}</th>`).join("") + "</tr>";
+                            value.forEach(item => {
+                                tableHTML += "<tr>" + Object.values(item).map(v => `<td style="padding:5px;">${v}</td>`).join("") + "</tr>";
+                            });
+                            tableHTML += "</table>";
+                            return tableHTML;
+                        } else {
+                            return `<strong>${key}:</strong> ${value.map(item => `<li>${item}</li>`).join("")}`;
+                        }
                     } else if (typeof value === "object" && value !== null) {
-                        return `<strong>${key}:</strong><ul>${Object.entries(value).map(([subKey, subValue]) =>
-                            `<li><strong>${subKey}:</strong> ${JSON.stringify(subValue, null, 2)}</li>`
-                        ).join('')}</ul>`;
+                        // Handling for nested objects (Cost Estimation, Project Plan, etc.)
+                        let nestedHTML = `<strong>${key}:</strong><ul>`;
+                        for (const [subKey, subValue] of Object.entries(value)) {
+                            nestedHTML += `<li><strong>${subKey}:</strong> ${typeof subValue === "object" ? JSON.stringify(subValue, null, 2) : subValue}</li>`;
+                        }
+                        nestedHTML += "</ul>";
+                        return nestedHTML;
                     } else {
                         return `<strong>${key}:</strong> ${value}`;
                     }
@@ -178,6 +191,7 @@
                 loader.style.display = "none";
             }
         }
+
 
 
     </script>
