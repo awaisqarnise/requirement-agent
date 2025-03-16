@@ -7,6 +7,10 @@ WORKDIR /app
 # Copy project files
 COPY . /app
 
+# Copy .env file into the container
+COPY .env /app/.env
+
+
 # Install dependencies
 RUN pip install --no-cache-dir --upgrade pip
 RUN python -m pip install --no-cache-dir -r requirements.txt
