@@ -3,25 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Requirement Agent</title>
-    <script>
-        async function analyzeProject() {
-            const projectDescription = document.getElementById("description").value;
-            const response = await fetch("https://requirement-agent-production.up.railway.app/analyze", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ project_description: projectDescription })
-            });
-            const result = await response.json();
-            document.getElementById("output").innerText = JSON.stringify(result, null, 2);
+    <title>Requirement Analysis Agent</title>
+    <style>
+        /* Tkxel Branding Colors */
+        :root {
+            --primary-color: #FF5733;
+            --secondary-color: #333333;
+            --accent-color: #FFFFFF;
+            --bg-color: #F4F4F4;
         }
-    </script>
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: var(--accent-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background: var(--secondary-color);
+            color: var(--accent-color);
+        }
+
+        .header img {
+            height: 50px;
+            margin-right: 10px;
+        }
+
+        h1 {
+            font-size: 22px;
+        }
+
+        label {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary-color);
+            color: var(--accent-color);
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: darkred;
+        }
+
+        .response {
+            text-align: left;
+            margin-top: 20px;
+            background: var(--bg-color);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .response ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .response li {
+            padding: 8px;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
 </head>
 <body>
-    <h2>Requirement Analysis</h2>
-    <textarea id="description" rows="4" cols="50" placeholder="Enter project description..."></textarea><br>
-    <button onclick="analyzeProject()">Analyze</button>
-    <h3>Output:</h3>
-    <pre id="output"></pre>
+
+    <!-- Header with Logo -->
+    <div class="header">
+        <img src="https://tkxel.com/assets/tkxel-logo.svg" alt="Tkxel Logo">
+        <h1>Requirement Analysis Agent</h1>
+    </div>
+
+    <div class="container">
+        <label for="projectDesc">Enter Project Description:</label>
+        <input type="text" id="projectDesc" placeholder="Describe your project...">
+        <button onclick="analyzeProject()">Analyze</button>
+
+        <!-- Response Display -->
+        <div class="response" id="responseContainer" style="display: none;">
+            <h3>Analysis Result:</h3>
+            <ul id="resultList"></ul>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeProject() {
+            const projectDescription = document.getElementById("projectDesc").value;
+            if (!projectDescription) {
+                alert("Please enter a project description!");
+                return;
+            }
+
+            const responseContainer = document.getElementById("responseContainer");
+            const resultList = document.getElementById("resultList");
+
+            responseContainer.style.display = "none";
+            resultList.innerHTML = "Loading...";
+
+            try {
+                const response = await fetch("https://requirement-agent-production.up.railway.app/analyze", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ project_description: projectDescription })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Server error, please try again!");
+                }
+
+                const data = await response.json();
+                resultList.innerHTML = "";
+
+                // Convert JSON response into line items
+                for (const [key, value] of Object.entries(data)) {
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `<strong>${key}:</strong> ${value}`;
+                    resultList.appendChild(listItem);
+                }
+
+                responseContainer.style.display = "block";
+            } catch (error) {
+                resultList.innerHTML = `<li style="color: red;">Error: ${error.message}</li>`;
+            }
+        }
+    </script>
+
 </body>
 </html>
